@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}CineBook - Booking Confirmed!{% endblock %}
+
+{% block extra_styles %}
+.confirmation-page { max-width: 700px; margin: 0 auto; padding: 3rem 2rem; text-align: center; }
+.success-animation {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(74,222,128,0.2), rgba(34,197,94,0.1));
+    border: 2px solid rgba(74,222,128,0.4);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 2rem; font-size: 3.5rem;
+    animation: pulse-ring 2s infinite;
+    box-shadow: 0 0 0 0 rgba(74,222,128,0.4);
+}
+@keyframes pulse-ring {
+    0%   { box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+    70%  { box-shadow: 0 0 0 20px rgba(74,222,128,0); }
+    100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+}
+.confirmation-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem; font-weight: 800; margin-bottom: 0.75rem;
+}
+.confirmation-subtitle { color: var(--text-secondary); font-size: 1rem; margin-bottom: 2.5rem; }
+.booking-ticket {
+    background: var(--gradient-card);
+    border: 1px solid var(--border);
+    border-radius: 20px; overflow: hidden;
+    margin-bottom: 2rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+.ticket-header {
+    background: var(--gradient-primary);
+    padding: 1.5rem; text-align: left;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.ticket-header-left .label { font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
+.ticket-header-left .value { font-size: 1.2rem; font-weight: 700; margin-top: 2px; }
+.booking-id-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 8px 16px; border-radius: 50px;
+    font-size: 0.85rem; font-weight: 700;
+    font-family: monospace; letter-spacing: 2px;
+}
+.ticket-dashed {
+    border-top: 2px dashed rgba(255,255,255,0.1);
+    margin: 0 1.5rem;
+    position: relative;
+}
+.ticket-dashed::before, .ticket-dashed::after {
+    content: ''; position: absolute; width: 24px; height: 24px;
+    background: var(--bg-dark); border-radius: 50%; top: -12px;
+}
+.ticket-dashed::before { left: -36px; }
+.ticket-dashed::after { right: -36px; }
+.ticket-body { padding: 1.5rem; }
+.ticket-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; text-align: left; }
+.ticket-item .t-label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.ticket-item .t-value { font-weight: 600; font-size: 0.95rem; }
+.ticket-footer { padding: 1.25rem 1.5rem; background: rgba(255,255,255,0.02); border-top: 1px solid var(--border); }
+.qr-placeholder {
+    width: 80px; height: 80px; margin: 0 auto;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 2px, transparent 2px, transparent 4px),
+                repeating-linear-gradient(90deg, rgba(255,255,255,0.1) 0px, rgba(255,255,255,0.1) 2px, transparent 2px, transparent 4px);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; border: 1px solid var(--border);
+}
+.action-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.confetti-container { position: fixed; inset: 0; pointer-events: none; z-index: 9999; }
+.confetti-piece {
+    position: absolute; width: 10px; height: 10px;
+    animation: confetti-fall linear forwards;
+}
+@keyframes confetti-fall {
+    0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="confetti-container" id="confetti"></div>
+
+<div class="confirmation-page">
+    <div class="success-animation fade-in">🎉</div>
+
+    <div class="confirmation-title fade-in">Booking Confirmed!</div>
+    <div class="confirmation-subtitle fade-in-delay-1">
+        Your tickets are booked! Enjoy the movie, {{ user.username }}. Have a great time! 🍿
+    </div>
+
+    <div class="booking-ticket fade-in-delay-2">
+        <div class="ticket-header">
+            <div class="ticket-header-left">
+                <div class="label">🎬 Movie Ticket</div>
+                <div class="value">{{ booking.movie_title }}</div>
+            </div>
+            <div class="booking-id-badge">{{ booking.booking_id }}</div>
+        </div>
+        <div class="ticket-dashed"></div>
+        <div class="ticket-body">
+            <div class="ticket-grid">
+                <div class="ticket-item">
+                    <div class="t-label"><i class="fas fa-map-marker-alt"></i> Theatre</div>
+                    <div class="t-value">{{ booking.theatre_name }}</div>
+                </div>
+                <div class="ticket-item">
+                    <div class="t-label"><i class="fas fa-clock"></i> Show Time</div>
+                    <div class="t-value">{{ booking.show_time }}</div>
+                </div>
+                <div class="ticket-item">
+                    <div class="t-label"><i class="fas fa-chair"></i> Seats</div>
+                    <div class="t-value">{{ booking.seats|join(', ') }}</div>
+                </div>
+                <div class="ticket-item">
+                    <div class="t-label"><i class="fas fa-calendar-check"></i> Date</div>
+                    <div class="t-value">{{ booking.booking_date }}</div>
+                </div>
+                <div class="ticket-item">
+                    <div class="t-label"><i class="fas fa-user"></i> Booked By</div>
+                    <div class="t-value">{{ user.username }}</div>
+                </div>
+                <div class="ticket-item">
+                    <div class="t-label"><i class="fas fa-rupee-sign"></i> Amount Paid</div>
+                    <div class="t-value" style="color:var(--primary-light)">₹{{ booking.amount }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="ticket-footer">
+            <div class="qr-placeholder">📱</div>
+            <div style="color:var(--text-muted);font-size:0.75rem;margin-top:0.5rem">Show this QR at the theatre entrance</div>
+        </div>
+    </div>
+
+    <div class="action-buttons fade-in-delay-3">
+        <a href="/cities" class="btn-primary"><i class="fas fa-film"></i> Book Another Movie</a>
+        <a href="/" class="btn-secondary"><i class="fas fa-home"></i> Go to Home</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Confetti animation
+const colors = ['#E63946','#F4A261','#FFD700','#4ADE80','#60A5FA','#A8DADC'];
+const container = document.getElementById('confetti');
+for (let i = 0; i < 80; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.cssText = `
+        left: ${Math.random() * 100}vw;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        animation-duration: ${2 + Math.random() * 3}s;
+        animation-delay: ${Math.random() * 1.5}s;
+        border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+        width: ${5 + Math.random() * 10}px;
+        height: ${5 + Math.random() * 10}px;
+    `;
+    container.appendChild(piece);
+}
+setTimeout(() => container.remove(), 5000);
+</script>
+{% endblock %}

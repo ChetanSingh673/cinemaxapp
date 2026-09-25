@@ -1,0 +1,71 @@
+---
+# ──────────────────────────────────────────────
+# ArgoCD Application for CineBook
+# Deploys the full app from a Git repository
+# ──────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cinebook-app
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    # ─── CHANGE THIS to your Git repo URL ───────
+    repoURL: https://github.com/YOUR_USERNAME/cinebook-k8s.git
+    targetRevision: HEAD
+    path: k8s
+    # ─────────────────────────────────────────────
+    directory:
+      recurse: true        # recursively apply all YAMLs under k8s/
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cinebook
+
+  syncPolicy:
+    automated:
+      prune: true          # auto-delete removed resources
+      selfHeal: true       # auto-revert manual changes
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+---
+# ──────────────────────────────────────────────
+# ArgoCD Project (optional but best practice)
+# ──────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: cinebook-project
+  namespace: argocd
+spec:
+  description: CineBook Movie Booking Platform
+  sourceRepos:
+    - '*'
+  destinations:
+    - namespace: cinebook
+      server: https://kubernetes.default.svc
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: storage.k8s.io
+      kind: StorageClass
+    - group: gateway.networking.k8s.io
+      kind: GatewayClass
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'

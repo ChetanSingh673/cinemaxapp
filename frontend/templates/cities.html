@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}CineBook - Select Your City{% endblock %}
+
+{% block extra_styles %}
+.cities-page {
+    padding: 4rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.page-hero {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+.page-hero h1 {
+    font-size: 2.8rem; font-weight: 800;
+    margin-bottom: 0.75rem;
+}
+.page-hero p { color: var(--text-secondary); font-size: 1.05rem; }
+.cities-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+.city-card {
+    background: var(--gradient-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    text-decoration: none;
+    position: relative;
+    group: true;
+}
+.city-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(230,57,70,0.5);
+    box-shadow: 0 25px 60px rgba(230,57,70,0.25);
+}
+.city-card-bg {
+    height: 200px;
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+}
+.city-emoji { font-size: 5rem; filter: drop-shadow(0 4px 20px rgba(0,0,0,0.5)); z-index: 1; }
+.city-gradient {
+    position: absolute; inset: 0;
+    opacity: 0.8;
+    transition: opacity 0.4s;
+}
+.city-card:hover .city-gradient { opacity: 1; }
+.chennai-bg   { background: linear-gradient(135deg, #1A1A2E, #16213E, #0F3460); }
+.bangalore-bg { background: linear-gradient(135deg, #1B4332, #2D6A4F, #40916C); }
+.hyderabad-bg { background: linear-gradient(135deg, #7B2D00, #C1440E, #E85D04); }
+.kerala-bg    { background: linear-gradient(135deg, #023E8A, #0077B6, #00B4D8); }
+.city-card-body { padding: 1.5rem; }
+.city-name {
+    font-size: 1.4rem; font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+.city-meta {
+    display: flex; align-items: center; gap: 0.75rem;
+    flex-wrap: wrap; margin-bottom: 1rem;
+}
+.city-stat {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--text-secondary); font-size: 0.82rem;
+}
+.city-highlights {
+    display: flex; flex-wrap: wrap; gap: 6px;
+}
+.city-tag {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 4px 10px; border-radius: 50px;
+    font-size: 0.75rem;
+}
+.city-arrow {
+    position: absolute; top: 1.2rem; right: 1.2rem;
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; transition: all 0.3s;
+    backdrop-filter: blur(10px);
+}
+.city-card:hover .city-arrow {
+    background: var(--primary);
+    transform: rotate(45deg);
+}
+.trending-banner {
+    background: linear-gradient(135deg, rgba(230,57,70,0.15), rgba(244,162,97,0.1));
+    border: 1px solid rgba(230,57,70,0.2);
+    border-radius: 16px; padding: 1.25rem 1.75rem;
+    display: flex; align-items: center; gap: 1rem;
+    max-width: 800px; margin: 0 auto 2.5rem;
+}
+.trending-icon { font-size: 1.5rem; }
+.trending-text strong { color: var(--primary-light); }
+.trending-text { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; }
+{% endblock %}
+
+{% block content %}
+<div class="cities-page">
+    <div class="page-hero fade-in">
+        <div style="font-size:1rem;color:var(--text-muted);margin-bottom:1rem;letter-spacing:2px;text-transform:uppercase;">
+            <i class="fas fa-map-marker-alt" style="color:var(--primary)"></i> Step 1 of 4
+        </div>
+        <h1>Choose Your <span style="background:var(--gradient-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">City</span></h1>
+        <p>Select your city to explore movies playing near you, {{ user.username }}!</p>
+    </div>
+
+    <div class="trending-banner fade-in-delay-1">
+        <div class="trending-icon">🔥</div>
+        <div class="trending-text">
+            <strong>Trending This Week:</strong> Dune: Part Two, Oppenheimer, Killers of the Flower Moon and more blockbusters now showing across all cities!
+        </div>
+    </div>
+
+    <div class="cities-grid">
+        <a href="/movies/Chennai" class="city-card fade-in-delay-1">
+            <div class="city-card-bg chennai-bg">
+                <div class="city-gradient chennai-bg"></div>
+                <div class="city-emoji">🏛️</div>
+            </div>
+            <div class="city-card-body">
+                <div class="city-name">Chennai</div>
+                <div class="city-meta">
+                    <div class="city-stat"><i class="fas fa-film"></i> 12 Movies</div>
+                    <div class="city-stat"><i class="fas fa-building"></i> 45 Theatres</div>
+                </div>
+                <div class="city-highlights">
+                    <span class="city-tag">IMAX Available</span>
+                    <span class="city-tag">4DX Screens</span>
+                    <span class="city-tag">Dolby Atmos</span>
+                </div>
+            </div>
+            <div class="city-arrow"><i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <a href="/movies/Bangalore" class="city-card fade-in-delay-2">
+            <div class="city-card-bg bangalore-bg">
+                <div class="city-gradient bangalore-bg"></div>
+                <div class="city-emoji">🌆</div>
+            </div>
+            <div class="city-card-body">
+                <div class="city-name">Bangalore</div>
+                <div class="city-meta">
+                    <div class="city-stat"><i class="fas fa-film"></i> 15 Movies</div>
+                    <div class="city-stat"><i class="fas fa-building"></i> 60 Theatres</div>
+                </div>
+                <div class="city-highlights">
+                    <span class="city-tag">IMAX Available</span>
+                    <span class="city-tag">ScreenX</span>
+                    <span class="city-tag">Premium Lounge</span>
+                </div>
+            </div>
+            <div class="city-arrow"><i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <a href="/movies/Hyderabad" class="city-card fade-in-delay-2">
+            <div class="city-card-bg hyderabad-bg">
+                <div class="city-gradient hyderabad-bg"></div>
+                <div class="city-emoji">🕌</div>
+            </div>
+            <div class="city-card-body">
+                <div class="city-name">Hyderabad</div>
+                <div class="city-meta">
+                    <div class="city-stat"><i class="fas fa-film"></i> 14 Movies</div>
+                    <div class="city-stat"><i class="fas fa-building"></i> 55 Theatres</div>
+                </div>
+                <div class="city-highlights">
+                    <span class="city-tag">IMAX Available</span>
+                    <span class="city-tag">4DX Screens</span>
+                    <span class="city-tag">MX4D</span>
+                </div>
+            </div>
+            <div class="city-arrow"><i class="fas fa-arrow-right"></i></div>
+        </a>
+
+        <a href="/movies/Kochi" class="city-card fade-in-delay-3">
+            <div class="city-card-bg kerala-bg">
+                <div class="city-gradient kerala-bg"></div>
+                <div class="city-emoji">🌴</div>
+            </div>
+            <div class="city-card-body">
+                <div class="city-name">Kochi</div>
+                <div class="city-meta">
+                    <div class="city-stat"><i class="fas fa-film"></i> 10 Movies</div>
+                    <div class="city-stat"><i class="fas fa-building"></i> 30 Theatres</div>
+                </div>
+                <div class="city-highlights">
+                    <span class="city-tag">Multiplex</span>
+                    <span class="city-tag">Dolby Atmos</span>
+                    <span class="city-tag">DBOX Seats</span>
+                </div>
+            </div>
+            <div class="city-arrow"><i class="fas fa-arrow-right"></i></div>
+        </a>
+    </div>
+</div>
+{% endblock %}

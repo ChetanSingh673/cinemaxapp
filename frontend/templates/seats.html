@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block title %}CineBook - Select Seats{% endblock %}
+
+{% block extra_styles %}
+.seats-page { max-width: 900px; margin: 0 auto; padding: 2.5rem 2rem; }
+.booking-summary {
+    background: var(--gradient-card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 1.25rem 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;
+}
+.booking-summary-item { display: flex; align-items: center; gap: 8px; }
+.booking-summary-item i { color: var(--primary); }
+.booking-summary-label { color: var(--text-muted); font-size: 0.75rem; display: block; }
+.booking-summary-value { font-weight: 600; font-size: 0.9rem; }
+.screen-container { text-align: center; margin-bottom: 2.5rem; }
+.screen {
+    width: 70%; margin: 0 auto 0.75rem;
+    height: 12px; background: linear-gradient(to bottom, rgba(230,57,70,0.6), transparent);
+    border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    box-shadow: 0 -4px 30px rgba(230,57,70,0.3);
+}
+.screen-label { color: var(--text-muted); font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; }
+.seat-legend {
+    display: flex; justify-content: center; gap: 1.5rem;
+    flex-wrap: wrap; margin-bottom: 2rem;
+}
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--text-secondary); }
+.legend-box {
+    width: 20px; height: 20px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+}
+.legend-available { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+.legend-selected  { background: var(--primary); }
+.legend-booked    { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); }
+.seat-categories { display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2rem; }
+.seat-category-label {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.75rem; padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+}
+.category-name { font-weight: 700; font-size: 0.9rem; }
+.category-price { color: var(--primary-light); font-weight: 600; font-size: 0.875rem; }
+.seats-row { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 8px; }
+.row-label {
+    width: 24px; display: flex; align-items: center; justify-content: center;
+    color: var(--text-muted); font-size: 0.72rem; font-weight: 600; flex-shrink: 0;
+}
+.seat-gap { width: 24px; }
+.seat {
+    width: 32px; height: 28px; border-radius: 6px 6px 3px 3px;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.08);
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; color: var(--text-muted);
+    position: relative;
+}
+.seat:hover:not(.booked) {
+    background: rgba(230,57,70,0.3); border-color: var(--primary);
+    transform: scale(1.1);
+}
+.seat.selected {
+    background: var(--primary); border-color: var(--primary-dark);
+    color: white; box-shadow: 0 3px 10px rgba(230,57,70,0.4);
+}
+.seat.booked {
+    background: rgba(255,255,255,0.03);
+    border-color: rgba(255,255,255,0.05);
+    cursor: not-allowed; color: rgba(255,255,255,0.1);
+}
+.booking-footer {
+    position: sticky; bottom: 0;
+    background: rgba(10,10,15,0.95); backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border); padding: 1.25rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 0 -2rem -2.5rem; flex-wrap: wrap; gap: 1rem;
+}
+.selected-seats-info { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+.seats-count { font-size: 0.85rem; color: var(--text-secondary); }
+.seats-count strong { color: var(--primary-light); }
+.total-price { font-size: 1.4rem; font-weight: 800; }
+.selected-seat-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.seat-chip {
+    background: rgba(230,57,70,0.2); border: 1px solid rgba(230,57,70,0.4);
+    color: var(--primary-light); padding: 3px 9px; border-radius: 20px; font-size: 0.75rem;
+}
+{% endblock %}
+
+{% block content %}
+<div class="seats-page">
+    <div class="booking-summary fade-in">
+        <div class="booking-summary-item">
+            <i class="fas fa-film"></i>
+            <div><span class="booking-summary-label">Movie</span><span class="booking-summary-value">{{ seat_data.movie_title }}</span></div>
+        </div>
+        <div class="booking-summary-item">
+            <i class="fas fa-map-marker-alt"></i>
+            <div><span class="booking-summary-label">Theatre</span><span class="booking-summary-value">{{ seat_data.theatre_name }}</span></div>
+        </div>
+        <div class="booking-summary-item">
+            <i class="fas fa-clock"></i>
+            <div><span class="booking-summary-label">Show Time</span><span class="booking-summary-value">{{ show_time }}</span></div>
+        </div>
+        <div class="booking-summary-item">
+            <i class="fas fa-calendar"></i>
+            <div><span class="booking-summary-label">Date</span><span class="booking-summary-value">Today</span></div>
+        </div>
+    </div>
+
+    <div class="screen-container fade-in-delay-1">
+        <div class="screen"></div>
+        <div class="screen-label">All eyes this way please!</div>
+    </div>
+
+    <div class="seat-legend fade-in-delay-1">
+        <div class="legend-item"><div class="legend-box legend-available"></div> Available</div>
+        <div class="legend-item"><div class="legend-box legend-selected"></div> Selected</div>
+        <div class="legend-item"><div class="legend-box legend-booked"><i class="fas fa-times" style="font-size:.6rem;color:rgba(255,255,255,.1)"></i></div> Booked</div>
+    </div>
+
+    <form method="POST" action="/payment" id="seatForm">
+        <input type="hidden" name="movie_id" value="{{ movie_id }}">
+        <input type="hidden" name="theatre_id" value="{{ theatre_id }}">
+        <input type="hidden" name="show_time" value="{{ show_time }}">
+
+        <div class="seat-categories fade-in-delay-2">
+            {% for category in seat_data.categories %}
+            <div>
+                <div class="seat-category-label">
+                    <span class="category-name">{{ category.name }}</span>
+                    <span class="category-price">₹{{ category.price }} per seat</span>
+                </div>
+                {% for row in category.rows %}
+                <div class="seats-row">
+                    <div class="row-label">{{ row.label }}</div>
+                    {% for seat in row.seats %}
+                        {% if seat == 'gap' %}
+                        <div class="seat-gap"></div>
+                        {% else %}
+                        <div class="seat {% if not seat.available %}booked{% endif %}"
+                             id="seat-{{ seat.id }}"
+                             data-seat-id="{{ seat.id }}"
+                             data-price="{{ category.price }}"
+                             {% if seat.available %}onclick="toggleSeat(this)"{% endif %}>
+                             {{ loop.index }}
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    <div class="row-label">{{ row.label }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="booking-footer">
+            <div class="selected-seats-info">
+                <div>
+                    <div class="seats-count">Selected: <strong id="seatCountDisplay">0 seats</strong></div>
+                    <div class="selected-seat-chips" id="selectedChips"></div>
+                </div>
+                <div class="total-price">₹<span id="totalPrice">0</span></div>
+            </div>
+            <button type="submit" class="btn-primary" id="proceedBtn" disabled
+                    style="opacity:0.5;cursor:not-allowed">
+                <i class="fas fa-lock"></i> Proceed to Pay
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedSeats = [];
+let totalPrice = 0;
+
+function toggleSeat(el) {
+    const seatId = el.dataset.seatId;
+    const price  = parseInt(el.dataset.price);
+    if (el.classList.contains('selected')) {
+        el.classList.remove('selected');
+        selectedSeats = selectedSeats.filter(s => s.id !== seatId);
+        totalPrice -= price;
+        removeHiddenInput(seatId);
+    } else {
+        if (selectedSeats.length >= 8) { alert('Max 8 seats per booking'); return; }
+        el.classList.add('selected');
+        selectedSeats.push({ id: seatId, price });
+        totalPrice += price;
+        addHiddenInput(seatId);
+    }
+    updateFooter();
+}
+
+function addHiddenInput(id) {
+    const inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = 'seats'; inp.value = id; inp.id = 'inp-' + id;
+    document.getElementById('seatForm').appendChild(inp);
+}
+function removeHiddenInput(id) {
+    const inp = document.getElementById('inp-' + id);
+    if (inp) inp.remove();
+}
+
+function updateFooter() {
+    document.getElementById('seatCountDisplay').textContent = selectedSeats.length + ' seat' + (selectedSeats.length !== 1 ? 's' : '');
+    document.getElementById('totalPrice').textContent = totalPrice.toLocaleString('en-IN');
+    const chips = document.getElementById('selectedChips');
+    chips.innerHTML = selectedSeats.map(s => `<span class="seat-chip">${s.id}</span>`).join('');
+    const btn = document.getElementById('proceedBtn');
+    btn.disabled = selectedSeats.length === 0;
+    btn.style.opacity = selectedSeats.length === 0 ? '0.5' : '1';
+    btn.style.cursor  = selectedSeats.length === 0 ? 'not-allowed' : 'pointer';
+}
+</script>
+{% endblock %}

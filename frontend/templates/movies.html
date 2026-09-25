@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}CineBook - Movies in {{ city }}{% endblock %}
+
+{% block extra_styles %}
+.movies-page { padding: 2.5rem 2rem; max-width: 1300px; margin: 0 auto; }
+.breadcrumb {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--text-muted); font-size: 0.875rem; margin-bottom: 2rem;
+}
+.breadcrumb a { color: var(--text-muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--primary-light); }
+.breadcrumb-sep { color: var(--border); }
+.breadcrumb-current { color: var(--text-primary); font-weight: 500; }
+.movies-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2rem; flex-wrap: gap;
+}
+.filter-bar {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 2rem;
+}
+.filter-btn {
+    padding: 8px 18px; border-radius: 50px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--text-secondary);
+    font-size: 0.85rem; cursor: pointer; transition: all 0.3s;
+    font-family: 'Inter', sans-serif;
+}
+.filter-btn:hover, .filter-btn.active {
+    background: var(--primary); border-color: var(--primary);
+    color: white;
+}
+.movies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+}
+.movie-card {
+    background: var(--gradient-card);
+    border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+    transition: all 0.4s; cursor: pointer;
+    text-decoration: none; color: inherit;
+    display: block;
+}
+.movie-card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(230,57,70,0.4);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(230,57,70,0.2);
+}
+.movie-poster {
+    height: 280px; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+}
+.movie-poster-bg {
+    position: absolute; inset: 0;
+    transition: transform 0.4s;
+}
+.movie-card:hover .movie-poster-bg { transform: scale(1.05); }
+.movie-poster-emoji { font-size: 5rem; z-index: 1; filter: drop-shadow(0 4px 20px rgba(0,0,0,0.5)); }
+.movie-poster-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 1rem;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    z-index: 2;
+    display: flex; justify-content: space-between; align-items: flex-end;
+}
+.movie-rating {
+    display: flex; align-items: center; gap: 4px;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,215,0,0.3);
+    padding: 4px 10px; border-radius: 20px;
+    color: var(--gold); font-size: 0.8rem; font-weight: 700;
+}
+.movie-language-badge {
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 20px;
+    color: white; font-size: 0.75rem;
+}
+.movie-info { padding: 1.1rem; }
+.movie-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; line-height: 1.3; }
+.movie-meta {
+    display: flex; gap: 0.75rem; flex-wrap: wrap;
+    color: var(--text-muted); font-size: 0.78rem; margin-bottom: 0.75rem;
+}
+.movie-meta span { display: flex; align-items: center; gap: 4px; }
+.movie-genres { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 0.9rem; }
+.genre-tag {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    padding: 3px 8px; border-radius: 50px;
+    font-size: 0.72rem; color: var(--text-secondary);
+}
+.btn-book-now {
+    display: block; width: 100%;
+    background: var(--gradient-primary);
+    border: none; border-radius: 8px;
+    color: white; font-weight: 600; font-size: 0.875rem;
+    padding: 10px; text-align: center;
+    cursor: pointer; transition: all 0.3s;
+    font-family: 'Inter', sans-serif; text-decoration: none;
+}
+.btn-book-now:hover { opacity: 0.9; transform: scale(1.02); }
+.no-movies {
+    grid-column: 1 / -1; text-align: center; padding: 4rem;
+    color: var(--text-muted);
+}
+{% endblock %}
+
+{% block content %}
+<div class="movies-page">
+    <div class="breadcrumb fade-in">
+        <a href="/cities"><i class="fas fa-home"></i> Cities</a>
+        <span class="breadcrumb-sep"><i class="fas fa-chevron-right" style="font-size:0.7rem"></i></span>
+        <span class="breadcrumb-current">{{ city }}</span>
+    </div>
+
+    <div class="movies-header fade-in">
+        <div>
+            <h1 class="section-title">Movies in <span style="background:var(--gradient-primary);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">{{ city }}</span></h1>
+            <p class="section-subtitle">{{ movies|length }} movies currently showing &bull; Updated today</p>
+        </div>
+        <a href="/cities" class="btn-secondary"><i class="fas fa-map-marker-alt"></i> Change City</a>
+    </div>
+
+    <div class="filter-bar fade-in-delay-1">
+        <button class="filter-btn active" onclick="filterMovies('all', this)">All Movies</button>
+        <button class="filter-btn" onclick="filterMovies('Action', this)">Action</button>
+        <button class="filter-btn" onclick="filterMovies('Drama', this)">Drama</button>
+        <button class="filter-btn" onclick="filterMovies('Thriller', this)">Thriller</button>
+        <button class="filter-btn" onclick="filterMovies('Sci-Fi', this)">Sci-Fi</button>
+        <button class="filter-btn" onclick="filterMovies('Adventure', this)">Adventure</button>
+    </div>
+
+    <div class="movies-grid" id="moviesGrid">
+        {% if movies %}
+            {% for movie in movies %}
+            <a href="/movie/{{ city }}/{{ movie._id }}" class="movie-card fade-in" data-genre="{{ movie.genres|join(',') }}">
+                <div class="movie-poster">
+                    <div class="movie-poster-bg" style="background: {{ movie.poster_gradient }};"></div>
+                    <div class="movie-poster-emoji">{{ movie.poster_emoji }}</div>
+                    <div class="movie-poster-overlay">
+                        <div class="movie-rating">
+                            <i class="fas fa-star"></i> {{ movie.rating }}
+                        </div>
+                        <div class="movie-language-badge">{{ movie.language }}</div>
+                    </div>
+                </div>
+                <div class="movie-info">
+                    <div class="movie-title">{{ movie.title }}</div>
+                    <div class="movie-meta">
+                        <span><i class="fas fa-clock"></i> {{ movie.duration }}m</span>
+                        <span><i class="fas fa-certificate"></i> {{ movie.certification }}</span>
+                    </div>
+                    <div class="movie-genres">
+                        {% for g in movie.genres[:3] %}
+                        <span class="genre-tag">{{ g }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="btn-book-now">Book Tickets</div>
+                </div>
+            </a>
+            {% endfor %}
+        {% else %}
+            <div class="no-movies">
+                <i class="fas fa-film" style="font-size:3rem;margin-bottom:1rem;display:block;opacity:0.3"></i>
+                <p>No movies available right now. Check back soon!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterMovies(genre, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.movie-card').forEach(card => {
+        if (genre === 'all') { card.style.display = 'block'; return; }
+        const genres = card.dataset.genre || '';
+        card.style.display = genres.toLowerCase().includes(genre.toLowerCase()) ? 'block' : 'none';
+    });
+}
+</script>
+{% endblock %}

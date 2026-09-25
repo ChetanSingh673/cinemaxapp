@@ -1,0 +1,433 @@
+---
+# ──────────────────────────────────────────────
+# FRONTEND SERVICE
+# ──────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: cinebook
+  labels:
+    app: frontend
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: frontend
+        version: v1
+    spec:
+      containers:
+        - name: frontend
+          image: kastrov/cinebook-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: cinebook-secrets
+                  key: secret-key
+            - name: AUTH_SERVICE_URL
+              value: "http://auth-service:5001"
+            - name: MOVIE_SERVICE_URL
+              value: "http://movie-service:5002"
+            - name: BOOKING_SERVICE_URL
+              value: "http://booking-service:5003"
+            - name: PAYMENT_SERVICE_URL
+              value: "http://payment-service:5004"
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: cinebook
+  labels:
+    app: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+      protocol: TCP
+  type: ClusterIP
+
+---
+# ──────────────────────────────────────────────
+# AUTH SERVICE
+# ──────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: cinebook
+  labels:
+    app: auth-service
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: auth-service
+        version: v1
+    spec:
+      containers:
+        - name: auth-service
+          image: kastrov/cinebook-auth:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5001
+
+          env:
+            - name: MONGO_URI
+              value: "mongodb://mongodb-auth:27017/authdb"
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: cinebook
+  labels:
+    app: auth-service
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - name: http
+      port: 5001
+      targetPort: 5001
+      protocol: TCP
+  type: ClusterIP
+
+---
+# ──────────────────────────────────────────────
+# MOVIE SERVICE
+# ──────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movie-service
+  namespace: cinebook
+  labels:
+    app: movie-service
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: movie-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: movie-service
+        version: v1
+    spec:
+      containers:
+        - name: movie-service
+          image: kastrov/cinebook-movie:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5002
+
+          env:
+            - name: MONGO_URI
+              value: "mongodb://mongodb-movie:27017/moviedb"
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5002
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5002
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: movie-service
+  namespace: cinebook
+  labels:
+    app: movie-service
+spec:
+  selector:
+    app: movie-service
+  ports:
+    - name: http
+      port: 5002
+      targetPort: 5002
+      protocol: TCP
+  type: ClusterIP
+
+---
+# ──────────────────────────────────────────────
+# BOOKING SERVICE
+# ──────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-service
+  namespace: cinebook
+  labels:
+    app: booking-service
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: booking-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: booking-service
+        version: v1
+    spec:
+      containers:
+        - name: booking-service
+          image: kastrov/cinebook-booking:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5003
+
+          env:
+            - name: MONGO_URI
+              value: "mongodb://mongodb-booking:27017/bookingdb"
+
+            - name: MOVIE_SERVICE_URL
+              value: "http://movie-service:5002"
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5003
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5003
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: booking-service
+  namespace: cinebook
+  labels:
+    app: booking-service
+spec:
+  selector:
+    app: booking-service
+  ports:
+    - name: http
+      port: 5003
+      targetPort: 5003
+      protocol: TCP
+  type: ClusterIP
+
+---
+# ──────────────────────────────────────────────
+# PAYMENT SERVICE
+# ──────────────────────────────────────────────
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: cinebook
+  labels:
+    app: payment-service
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: payment-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: payment-service
+        version: v1
+    spec:
+      containers:
+        - name: payment-service
+          image: kastrov/cinebook-payment:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5004
+
+          env:
+            - name: MONGO_URI
+              value: "mongodb://mongodb-payment:27017/paymentdb"
+
+            - name: MOVIE_SERVICE_URL
+              value: "http://movie-service:5002"
+
+            - name: BOOKING_SERVICE_URL
+              value: "http://booking-service:5003"
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "300m"
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5004
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5004
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: cinebook
+  labels:
+    app: payment-service
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - name: http
+      port: 5004
+      targetPort: 5004
+      protocol: TCP
+  type: ClusterIP

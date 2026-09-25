@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+{% block title %}CineBook - Secure Payment{% endblock %}
+
+{% block extra_styles %}
+.payment-page { max-width: 1000px; margin: 0 auto; padding: 2.5rem 2rem; }
+.payment-grid { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; }
+.payment-card {
+    background: var(--gradient-card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 2rem;
+}
+.payment-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.5rem; }
+.payment-subtitle { color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 2rem; }
+.secure-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.3);
+    color: #4ADE80; padding: 5px 12px; border-radius: 50px;
+    font-size: 0.78rem; font-weight: 600; margin-bottom: 2rem;
+}
+.card-visual {
+    background: linear-gradient(135deg, #1D3557, #457B9D, #1D3557);
+    border-radius: 16px; padding: 1.75rem;
+    margin-bottom: 2rem;
+    position: relative; overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    min-height: 160px;
+}
+.card-visual::before {
+    content: ''; position: absolute;
+    width: 200px; height: 200px; border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+    top: -60px; right: -60px;
+}
+.card-visual::after {
+    content: ''; position: absolute;
+    width: 150px; height: 150px; border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+    bottom: -40px; left: 100px;
+}
+.card-chip { font-size: 2rem; margin-bottom: 1rem; }
+.card-number-display {
+    font-size: 1.3rem; letter-spacing: 4px; font-weight: 600;
+    font-family: monospace; margin-bottom: 1.5rem;
+    color: rgba(255,255,255,0.9);
+}
+.card-bottom { display: flex; justify-content: space-between; align-items: flex-end; }
+.card-label { font-size: 0.65rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+.card-value { font-size: 0.9rem; font-weight: 600; color: rgba(255,255,255,0.9); }
+.card-brand { font-size: 1.8rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.form-group { margin-bottom: 1.25rem; }
+.form-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.form-input {
+    width: 100%; background: rgba(255,255,255,0.05);
+    border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 12px 14px; color: var(--text-primary);
+    font-size: 0.95rem; font-family: 'Inter', sans-serif;
+    transition: all 0.3s; outline: none;
+}
+.form-input:focus { border-color: var(--primary); background: rgba(230,57,70,0.05); box-shadow: 0 0 0 3px rgba(230,57,70,0.15); }
+.form-input::placeholder { color: var(--text-muted); }
+.payment-methods {
+    display: flex; gap: 8px; margin-bottom: 1.5rem;
+}
+.payment-method {
+    flex: 1; padding: 10px; border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: transparent; cursor: pointer;
+    transition: all 0.3s; text-align: center;
+    font-size: 1.2rem; font-family: 'Inter', sans-serif;
+    color: var(--text-primary);
+}
+.payment-method.active { border-color: var(--primary); background: rgba(230,57,70,0.1); }
+.payment-method:hover { border-color: rgba(230,57,70,0.3); }
+.btn-pay {
+    width: 100%; padding: 16px;
+    background: var(--gradient-primary);
+    border: none; border-radius: 12px;
+    color: white; font-size: 1.05rem; font-weight: 700;
+    cursor: pointer; transition: all 0.3s;
+    box-shadow: 0 8px 25px rgba(230,57,70,0.4);
+    font-family: 'Inter', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.btn-pay:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(230,57,70,0.5); }
+.order-summary-card {
+    background: var(--gradient-card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 1.75rem; height: fit-content;
+    position: sticky; top: 90px;
+}
+.order-summary-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; }
+.summary-movie-poster {
+    height: 120px; border-radius: 12px; margin-bottom: 1.25rem;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3.5rem; overflow: hidden; position: relative;
+}
+.summary-line {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.875rem;
+}
+.summary-line:last-of-type { border-bottom: none; }
+.summary-label { color: var(--text-secondary); }
+.summary-value { font-weight: 500; }
+.summary-total {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 1rem; padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    font-size: 1.1rem; font-weight: 800;
+}
+.total-amount { color: var(--primary-light); font-size: 1.4rem; }
+.trust-badges { display: flex; gap: 8px; margin-top: 1.5rem; flex-wrap: wrap; }
+.trust-badge {
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    padding: 5px 10px; border-radius: 8px;
+    font-size: 0.72rem; color: var(--text-muted);
+}
+.error-alert {
+    background: rgba(230,57,70,0.15); border: 1px solid rgba(230,57,70,0.4);
+    border-radius: 10px; padding: 10px 14px;
+    font-size: .875rem; color: var(--primary-light);
+    margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;
+}
+{% endblock %}
+
+{% block content %}
+<div class="payment-page">
+    <div style="margin-bottom:2rem" class="fade-in">
+        <h1 class="section-title">Secure Payment</h1>
+        <p class="section-subtitle">Complete your booking securely</p>
+    </div>
+
+    {% if error %}
+    <div class="error-alert fade-in"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+    {% endif %}
+
+    <div class="payment-grid">
+        <div class="payment-card fade-in">
+            <div class="secure-badge">
+                <i class="fas fa-lock"></i> 256-bit SSL Encrypted &bull; 100% Secure Payment
+            </div>
+
+            <div class="payment-methods">
+                <button class="payment-method active" onclick="setMethod(this)">💳 Credit Card</button>
+                <button class="payment-method" onclick="setMethod(this)">🏦 Debit Card</button>
+                <button class="payment-method" onclick="setMethod(this)">📱 UPI</button>
+            </div>
+
+            <div class="card-visual" id="cardVisual">
+                <div class="card-chip">💳</div>
+                <div class="card-number-display" id="cardDisplay">•••• •••• •••• ••••</div>
+                <div class="card-bottom">
+                    <div>
+                        <div class="card-label">Card Holder</div>
+                        <div class="card-value" id="cardHolder">{{ user.username }}</div>
+                    </div>
+                    <div>
+                        <div class="card-label">Expires</div>
+                        <div class="card-value" id="cardExpiry">MM/YY</div>
+                    </div>
+                    <div class="card-brand" id="cardBrand">💳</div>
+                </div>
+            </div>
+
+            <form method="POST" action="/process_payment" onsubmit="return handlePay(event)">
+                <div class="form-group">
+                    <label class="form-label">Card Number</label>
+                    <input type="text" name="card_number" class="form-input"
+                           placeholder="1234 5678 9012 3456" maxlength="19"
+                           oninput="formatCard(this)" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Expiry Date</label>
+                        <input type="text" name="expiry" class="form-input"
+                               placeholder="MM/YY" maxlength="5"
+                               oninput="formatExpiry(this)" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CVV</label>
+                        <input type="password" name="cvv" class="form-input"
+                               placeholder="•••" maxlength="4" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Name on Card</label>
+                    <input type="text" name="card_name" class="form-input"
+                           value="{{ user.username }}" required>
+                </div>
+                <button type="submit" class="btn-pay" id="payBtn">
+                    <i class="fas fa-lock"></i>
+                    Pay ₹<span id="payAmount">{{ booking_info.seats|length * 250 if booking_info.seats else 0 }}</span> Securely
+                </button>
+            </form>
+
+            <div class="trust-badges" style="margin-top:1.5rem">
+                <div class="trust-badge"><i class="fas fa-shield-alt" style="color:#4ADE80"></i> RBI Compliant</div>
+                <div class="trust-badge"><i class="fas fa-lock" style="color:#60A5FA"></i> PCI DSS</div>
+                <div class="trust-badge"><i class="fas fa-check-circle" style="color:var(--primary-light)"></i> 3D Secure</div>
+            </div>
+        </div>
+
+        <div class="order-summary-card fade-in-delay-1">
+            <div class="order-summary-title">
+                <i class="fas fa-receipt" style="color:var(--primary)"></i> Booking Summary
+            </div>
+            <div class="summary-movie-poster" style="background:linear-gradient(135deg,#1D3557,#457B9D)">
+                🎬
+            </div>
+            <div class="summary-line">
+                <span class="summary-label">Movie</span>
+                <span class="summary-value">{{ booking_info.movie_id }}</span>
+            </div>
+            <div class="summary-line">
+                <span class="summary-label">Show Time</span>
+                <span class="summary-value">{{ booking_info.show_time }}</span>
+            </div>
+            <div class="summary-line">
+                <span class="summary-label">Seats</span>
+                <span class="summary-value">{{ booking_info.seats|join(', ') if booking_info.seats else 'N/A' }}</span>
+            </div>
+            <div class="summary-line">
+                <span class="summary-label">Seat Count</span>
+                <span class="summary-value">{{ booking_info.seats|length if booking_info.seats else 0 }} seats</span>
+            </div>
+            <div class="summary-line">
+                <span class="summary-label">Convenience Fee</span>
+                <span class="summary-value">₹{{ (booking_info.seats|length * 30) if booking_info.seats else 0 }}</span>
+            </div>
+            <div class="summary-total">
+                <span>Total</span>
+                <span class="total-amount">₹{{ (booking_info.seats|length * 280) if booking_info.seats else 0 }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function formatCard(inp) {
+    let v = inp.value.replace(/\D/g,'').substring(0,16);
+    inp.value = v.replace(/(.{4})/g,'$1 ').trim();
+    const disp = v.padEnd(16,'•');
+    document.getElementById('cardDisplay').textContent =
+        disp.replace(/(.{4})/g,'$1 ').trim().replace(/[0-9]/g,'•');
+    // show last 4
+    if(v.length > 0) {
+        let masked = '•••• •••• •••• ' + (v.length >= 16 ? v.slice(12) : '••••'.slice(0, v.length > 12 ? v.length - 12 : 0));
+        document.getElementById('cardDisplay').textContent = masked;
+    }
+}
+function formatExpiry(inp) {
+    let v = inp.value.replace(/\D/g,'');
+    if(v.length >= 2) v = v.slice(0,2) + '/' + v.slice(2,4);
+    inp.value = v;
+    document.getElementById('cardExpiry').textContent = v || 'MM/YY';
+}
+function setMethod(btn) {
+    document.querySelectorAll('.payment-method').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+function handlePay(e) {
+    const btn = document.getElementById('payBtn');
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing Payment...';
+    btn.disabled = true;
+    return true;
+}
+</script>
+{% endblock %}

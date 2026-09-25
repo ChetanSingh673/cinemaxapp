@@ -1,0 +1,373 @@
+1) Launch Ubuntu 24.04 with t2.large instance type 
+
+2) Install Jenkins, AWS CLI, EKS CTL, Kubectl
+
+3) Setup Jenkins
+
+4) Follow Phase 1 & Phase 2 Steps in the GitHub Documentation (Readme.md file)
+
+5) Install helm
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+helm version
+
+6) Proceed with the commands in Phase 4
+
+7) By default Jenkins will run as Jenkins user and cannot access Kubernetes Cluster Nodes.
+Lets verify;
+be as a root user;
+kubectl get nodes ----> You will see the nodes
+
+Switch to Jenkins user:
+sudo su - jenkins
+
+Check:
+kubectl get nodes
+It will probably fail because Jenkins doesn't have your kubeconfig.
+
+Switch back to root user and execute below commands;
+sudo mkdir -p /var/lib/jenkins/.kube
+sudo cp ~/.kube/config /var/lib/jenkins/.kube/config
+sudo chown -R jenkins:jenkins /var/lib/jenkins/.kube
+
+sudo su - jenkins
+kubectl get nodes ----> You will see the response
+
+Add Jenkins to Docker Group (Be as a root user and execute below commands)
+sudo usermod -aG docker jenkins
+sudo systemctl restart jenkins
+
+Verify:
+sudo su - jenkins
+
+docker ps
+Must work without sudo.
+
+8) Install Pipeline Stage view plugin
+
+9) Configure dockerhub credentials as dockerhub-creds in Jenkins with kind as username with password
+
+10) Run the Pipeline Below
+pipeline {
+agent any
+
+environment {
+    DOCKERHUB_CREDS = 'dockerhub-creds'
+    DOCKERHUB_USER  = 'kastrov'
+
+    FRONTEND_IMAGE = 'kastrov/cinebook-frontend'
+    AUTH_IMAGE     = 'kastrov/cinebook-auth'
+    MOVIE_IMAGE    = 'kastrov/cinebook-movie'
+    BOOKING_IMAGE  = 'kastrov/cinebook-booking'
+    PAYMENT_IMAGE  = 'kastrov/cinebook-payment'
+}
+
+options {
+    timestamps()
+    disableConcurrentBuilds()
+}
+
+stages {
+
+    stage('Checkout Source') {
+        steps {
+            git branch: 'main',
+                url: 'https://github.com/KastroVKiran/cine-max-app.git'
+        }
+    }
+
+    stage('Verify Tools') {
+        steps {
+            sh '''
+                docker --version
+                kubectl version --client
+                aws --version
+            '''
+        }
+    }
+
+    stage('Build Docker Images') {
+        steps {
+            sh '''
+                docker build -t ${FRONTEND_IMAGE}:latest ./frontend
+                docker build -t ${AUTH_IMAGE}:latest ./auth-service
+                docker build -t ${MOVIE_IMAGE}:latest ./movie-service
+                docker build -t ${BOOKING_IMAGE}:latest ./booking-service
+                docker build -t ${PAYMENT_IMAGE}:latest ./payment-service
+            '''
+        }
+    }
+
+    stage('Push Images To DockerHub') {
+        steps {
+
+            withCredentials([
+                usernamePassword(
+                    credentialsId: "${DOCKERHUB_CREDS}",
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )
+            ]) {
+
+                sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+                    docker push ${FRONTEND_IMAGE}:latest
+                    docker push ${AUTH_IMAGE}:latest
+                    docker push ${MOVIE_IMAGE}:latest
+                    docker push ${BOOKING_IMAGE}:latest
+                    docker push ${PAYMENT_IMAGE}:latest
+
+                    docker logout
+                '''
+            }
+        }
+    }
+
+    stage('Deploy Kubernetes Resources') {
+        steps {
+            sh '''
+                kubectl apply -f k8s/namespaces/namespace.yaml
+
+                kubectl apply -f k8s/mongodb/storageclass.yaml
+
+                kubectl apply -f k8s/mongodb/mongodb-statefulsets.yaml
+
+                kubectl apply -f k8s/services/secrets.yaml
+
+                kubectl apply -f k8s/services/deployments.yaml
+
+                kubectl apply -f k8s/ingress.yaml
+            '''
+        }
+    }
+
+    stage('Rollout Restart') {
+        steps {
+            sh '''
+                kubectl rollout restart deployment/frontend -n cinebook
+                kubectl rollout restart deployment/auth-service -n cinebook
+                kubectl rollout restart deployment/movie-service -n cinebook
+                kubectl rollout restart deployment/booking-service -n cinebook
+                kubectl rollout restart deployment/payment-service -n cinebook
+            '''
+        }
+    }
+
+    stage('Verify Rollout') {
+        steps {
+            sh '''
+                kubectl rollout status deployment/frontend -n cinebook --timeout=300s
+                kubectl rollout status deployment/auth-service -n cinebook --timeout=300s
+                kubectl rollout status deployment/movie-service -n cinebook --timeout=300s
+                kubectl rollout status deployment/booking-service -n cinebook --timeout=300s
+                kubectl rollout status deployment/payment-service -n cinebook --timeout=300s
+            '''
+        }
+    }
+
+    stage('Show Application URL') {
+        steps {
+            sh '''
+                echo "==============================="
+                echo "Ingress Information"
+                echo "==============================="
+
+                kubectl get ingress -n cinebook
+
+                echo ""
+                echo "ALB DNS:"
+                kubectl get ingress cinebook-ingress -n cinebook -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
+                echo ""
+            '''
+        }
+    }
+}
+
+post {
+
+    success {
+        echo 'Deployment completed successfully.'
+    }
+
+    failure {
+        echo 'Pipeline failed.'
+    }
+
+    always {
+        sh 'docker image prune -f || true'
+    }
+}
+
+
+}
+
+
+11) Access the app
+Goto EC2 ----> Load Balancer ----> Copy the DNS of Load Balancer ----> Access the App and Enter the Data
+
+12) Execute the DB Related Commands in Phase 8 - 🛢️ MongoDB Pod Access Commands
+You will see the data entered into the app
+
+13) Lets configure domain with SSL Certificate
+learndevops01.click
+
+Goto ACM and request a certificate for below domains
+learndevops01.click
+*.learndevops01.click
+
+Copy the ARN of the Certificate
+arn:aws:acm:ap-south-1:560185625463:certificate/5738a341-7ff0-46bd-b676-ff4a23326c6c
+
+Create Route 53 Records
+Go to:
+
+Route53
+→ Hosted Zones
+→ learndevops01.click
+
+Create the following records.
+
+Click on the Hosted Zone 
+
+Create Record
+
+Record Name:
+(blank)
+
+Record Type:
+A
+
+Alias:
+ON
+
+Route Traffic To:
+Alias to Application Load Balancer
+
+Select your ALB.
+
+Create Record.
+
+Auth Subdomain
+Create Record
+Record Name:
+auth
+Record Type:
+A
+Alias:
+ON
+Select same ALB.
+
+Movie Subdomain
+movie
+Alias → same ALB.
+
+Booking Subdomain
+booking
+Alias → same ALB.
+
+Payment Subdomain
+payment
+Alias → same ALB.
+
+You should now have:
+learndevops01.click
+auth.learndevops01.click
+movie.learndevops01.click
+booking.learndevops01.click
+payment.learndevops01.click
+
+all pointing to the same ALB.
+
+
+14) Since domain is configured, we need to update the ingress.yml file in gtihub repo.
+Paste the below content in the existing ingress.yml file and then run the pipeline
+Note: No need to delete the old ingress, as we are referring to the same old ingress name.
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cinebook-ingress
+  namespace: cinebook
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: |
+      [{"HTTP":80},{"HTTPS":443}]
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-south-1:560185625463:certificate/REPLACE-WITH-YOUR-CERTIFICATE-ID
+spec:
+  ingressClassName: alb
+  rules:
+    - host: learndevops01.click
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 5000
+    - host: auth.learndevops01.click
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 5001
+    - host: movie.learndevops01.click
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: movie-service
+                port:
+                  number: 5002
+    - host: booking.learndevops01.click
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: booking-service
+                port:
+                  number: 5003
+    - host: payment.learndevops01.click
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: payment-service
+                port:
+                  number: 5004
+
+15) Access the app using Domains and Subdomains
+https://learndevops01.click 
+
+Don't access the app using below subdomains. Its not required. Using the above main domain itself the path based routing is happening
+https://auth.learndevops01.click
+https://movie.learndevops01.click
+https://booking.learndevops01.click
+https://payment.learndevops01.click
+
+16) Setup ArgoCD
+Before proceeding, increase the node count to 4
+
+   85  helm repo add argo https://argoproj.github.io/argo-helm
+   86  helm repo update
+   87  kubectl create namespace argocd
+   88  helm install argocd argo/argo-cd --namespace argocd
+   89  kubectl get all -n argocd
+   90  kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+   91  kubectl get all -n argocd
+   92  kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+17) Students should setup Monitoring part
